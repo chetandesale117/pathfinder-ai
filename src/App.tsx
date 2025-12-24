@@ -11,6 +11,8 @@ import MathematicalThinking from "./pages/games/MathematicalThinking";
 import PatternRecognition from "./pages/games/PatternRecognition";
 import ProblemSolving from "./pages/games/ProblemSolving";
 import TechnicalKnowledge from "./pages/games/TechnicalKnowledge";
+import CareerQuest from "./pages/games/CareerQuest";
+import GameResults from "./pages/GameResults";
 import SkillQuiz from "./pages/SkillQuiz";
 import CareerResults from "./pages/CareerResults";
 import NotFound from "./pages/NotFound";
@@ -32,6 +34,8 @@ const App = () => (
           <Route path="/games/pattern-recognition" element={<PatternRecognition />} />
           <Route path="/games/problem-solving" element={<ProblemSolving />} />
           <Route path="/games/technical-knowledge" element={<TechnicalKnowledge />} />
+          <Route path="/games/career-quest" element={<CareerQuest />} />
+          <Route path="/game-results" element={<GameResults />} />
           <Route path="/skill-quiz" element={<SkillQuiz />} />
           <Route path="/career-results" element={<CareerResults />} />
           <Route path="*" element={<NotFound />} />

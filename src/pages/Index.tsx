@@ -7,19 +7,21 @@ import {
   Brain,
   Target,
   BarChart3,
-  FileText,
+  Gamepad2,
   Sparkles,
-  Users,
+  Trophy,
   ArrowRight,
   CheckCircle2,
+  Zap,
+  Star,
 } from "lucide-react";
 
 const features = [
   {
-    icon: Brain,
-    title: "Psychometric Assessment",
+    icon: Gamepad2,
+    title: "Gamified IQ Games",
     description:
-      "Discover your personality traits, strengths, and work preferences through our scientifically designed assessment.",
+      "Challenge yourself with fun, engaging games that assess your cognitive abilities and unlock your potential.",
   },
   {
     icon: Target,
@@ -31,33 +33,33 @@ const features = [
     icon: Sparkles,
     title: "AI Career Prediction",
     description:
-      "Our AI analyzes your profile to recommend careers that perfectly match your abilities and interests.",
+      "Our ML model analyzes your game performance to recommend careers that perfectly match your abilities.",
   },
   {
     icon: BarChart3,
-    title: "Interactive Dashboard",
+    title: "Progress Dashboard",
     description:
-      "Track your progress, view insights, and monitor your career development journey in one place.",
+      "Track your game scores, XP, levels, and achievements while monitoring your career development journey.",
   },
   {
-    icon: FileText,
-    title: "Detailed Reports",
+    icon: Trophy,
+    title: "Achievements & Badges",
     description:
-      "Download comprehensive PDF reports with personalized career recommendations and action plans.",
+      "Earn badges and unlock achievements as you complete games and climb the leaderboard rankings.",
   },
   {
-    icon: Users,
-    title: "Expert Guidance",
+    icon: Brain,
+    title: "Cognitive Insights",
     description:
-      "Get access to industry insights and expert tips tailored to your recommended career paths.",
+      "Get detailed insights into your logical reasoning, pattern recognition, and problem-solving abilities.",
   },
 ];
 
 const benefits = [
-  "Personalized career recommendations based on your unique profile",
-  "Science-backed psychometric assessments",
-  "Real-time job market insights and trends",
-  "Actionable steps to achieve your career goals",
+  "Play games to discover your ideal career",
+  "Earn XP and level up as you progress",
+  "ML-powered career predictions based on performance",
+  "Unlock achievements and compete on leaderboards",
 ];
 
 export default function Index() {
@@ -99,8 +101,8 @@ export default function Index() {
               transition={{ duration: 0.6, delay: 0.2 }}
               className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto"
             >
-              Take our comprehensive assessments and let AI match you with careers
-              that align with your skills, interests, and personality.
+              Play engaging IQ games, earn XP, and let our AI match you with careers
+              that align with your cognitive strengths and interests.
             </motion.p>
 
             <motion.div
@@ -110,13 +112,16 @@ export default function Index() {
               className="flex flex-col sm:flex-row gap-4 justify-center"
             >
               <Button asChild variant="hero" size="xl">
-                <Link to="/dashboard">
-                  Get Started Free
-                  <ArrowRight className="w-5 h-5" />
+                <Link to="/games">
+                  <Gamepad2 className="w-5 h-5" />
+                  Play Games
                 </Link>
               </Button>
               <Button asChild variant="outline" size="xl">
-                <Link to="/psychometric-test">Take Assessment</Link>
+                <Link to="/dashboard">
+                  <Zap className="w-5 h-5" />
+                  View Dashboard
+                </Link>
               </Button>
             </motion.div>
 

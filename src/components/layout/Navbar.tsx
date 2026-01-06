@@ -1,18 +1,31 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Brain, Menu, X } from "lucide-react";
+import { Brain, Menu, X, LogOut, User } from "lucide-react";
 import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 const navLinks = [
   { name: "Home", path: "/" },
   { name: "Dashboard", path: "/dashboard" },
   { name: "Games", path: "/games" },
+  { name: "Leaderboard", path: "/leaderboard" },
   { name: "Skill Quiz", path: "/skill-quiz" },
 ];
 
 export function Navbar() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { isAuthenticated, user, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
@@ -55,12 +68,53 @@ export function Navbar() {
         </div>
 
         <div className="hidden md:flex items-center gap-3">
-          <Button variant="ghost" size="sm">
-            Log in
-          </Button>
-          <Button variant="hero" size="sm">
-            Get Started
-          </Button>
+          {isAuthenticated ? (
+            <>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="flex items-center gap-2">
+                    <Avatar className="w-8 h-8">
+                      <AvatarFallback>
+                        {user?.name?.charAt(0).toUpperCase() || "U"}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="hidden lg:inline">{user?.name || "User"}</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>
+                    <div className="flex flex-col">
+                      <span>{user?.name}</span>
+                      <span className="text-xs text-muted-foreground">{user?.email}</span>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => navigate("/dashboard")}>
+                    <User className="w-4 h-4 mr-2" />
+                    Dashboard
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate("/leaderboard")}>
+                    <Brain className="w-4 h-4 mr-2" />
+                    Leaderboard
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={logout}>
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Log out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </>
+          ) : (
+            <>
+              <Button variant="ghost" size="sm" onClick={() => navigate("/login")}>
+                Log in
+              </Button>
+              <Button variant="hero" size="sm" onClick={() => navigate("/register")}>
+                Get Started
+              </Button>
+            </>
+          )}
         </div>
 
         {/* Mobile Menu Button */}
@@ -96,12 +150,21 @@ export function Navbar() {
               </Link>
             ))}
             <div className="flex gap-2 pt-2 border-t border-border/50 mt-2">
-              <Button variant="ghost" size="sm" className="flex-1">
-                Log in
-              </Button>
-              <Button variant="hero" size="sm" className="flex-1">
-                Get Started
-              </Button>
+              {isAuthenticated ? (
+                <Button variant="ghost" size="sm" className="flex-1" onClick={() => { logout(); setMobileMenuOpen(false); }}>
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Log out
+                </Button>
+              ) : (
+                <>
+                  <Button variant="ghost" size="sm" className="flex-1" onClick={() => { navigate("/login"); setMobileMenuOpen(false); }}>
+                    Log in
+                  </Button>
+                  <Button variant="hero" size="sm" className="flex-1" onClick={() => { navigate("/register"); setMobileMenuOpen(false); }}>
+                    Get Started
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         </motion.div>

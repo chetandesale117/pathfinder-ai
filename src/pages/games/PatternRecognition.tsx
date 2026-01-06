@@ -9,7 +9,7 @@ import { GameResults } from "@/components/games/GameResults";
 import { Shapes, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
-import axios from "axios";
+import { gameAPI } from "@/lib/api";
 
 interface Question {
   id: number;
@@ -196,13 +196,16 @@ export default function PatternRecognition() {
   const submitResults = async () => {
     setIsComplete(true);
     try {
-      await axios.post("/api/game/submit", {
+      await gameAPI.submit({
         gameType: "pattern-recognition",
         accuracy: (correctAnswers / questions.length) * 100,
         timeTaken: totalTime,
         score,
         xpEarned: xp,
-        visualReasoningScore: Math.round((correctAnswers / questions.length) * 100),
+        totalQuestions: questions.length,
+        correctAnswers,
+        streak,
+        avgTimePerQuestion: totalTime / questions.length,
       });
     } catch {
       // Silently handle

@@ -9,7 +9,7 @@ import { GameResults } from "@/components/games/GameResults";
 import { Lightbulb, ArrowLeft, Info } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
-import axios from "axios";
+import { gameAPI } from "@/lib/api";
 
 interface Question {
   id: number;
@@ -214,13 +214,16 @@ export default function ProblemSolving() {
   const submitResults = async () => {
     setIsComplete(true);
     try {
-      await axios.post("/api/game/submit", {
+      await gameAPI.submit({
         gameType: "problem-solving",
         accuracy: (correctAnswers / questions.length) * 100,
         timeTaken: totalTime,
         score,
         xpEarned: xp,
-        decisionMakingScore: Math.round((score / (questions.length * 30)) * 100),
+        totalQuestions: questions.length,
+        correctAnswers,
+        streak,
+        avgTimePerQuestion: totalTime / questions.length,
       });
     } catch {
       // Silently handle

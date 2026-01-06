@@ -1,4 +1,88 @@
-# Welcome to your Lovable project
+# CareerAI - AI-Powered Career Recommendation Platform
+
+A gamified career assessment platform that uses cognitive games and skill quizzes to provide AI-powered career recommendations.
+
+## Project Structure
+
+```
+pathfinder-ai/
+├── src/              # Frontend (React + TypeScript)
+├── backend/          # Backend API (Node.js + Express + MongoDB)
+├── FRONTEND_SUMMARY.md    # Frontend API documentation
+└── IMPLEMENTATION_SUMMARY.md  # Implementation details
+```
+
+## Quick Start
+
+### Frontend Setup
+
+1. **Install dependencies:**
+   ```bash
+   npm install
+   ```
+
+2. **Start development server:**
+   ```bash
+   npm run dev
+   ```
+   Frontend runs on `http://localhost:8080`
+
+### Backend Setup
+
+1. **Navigate to backend:**
+   ```bash
+   cd backend
+   ```
+
+2. **Install dependencies:**
+   ```bash
+   npm install
+   ```
+
+3. **Create `.env` file:**
+   See `backend/SETUP.md` for details
+
+4. **Start MongoDB** (if using local)
+
+5. **Start backend server:**
+   ```bash
+   npm run dev
+   ```
+   Backend runs on `http://localhost:3000`
+
+See `backend/README.md` and `backend/SETUP.md` for detailed backend setup instructions.
+
+## Features
+
+- 🎮 **6 Cognitive Games** - Logical reasoning, math, patterns, problem-solving, technical knowledge, career quest
+- 📊 **Real-time Dashboard** - Track progress, XP, levels, badges, and skills
+- 🎯 **Career Prediction** - AI-powered career recommendations based on game performance
+- 🏆 **Leaderboard** - Compete with other players globally
+- 🎖️ **Badge System** - Unlock achievements as you play
+- 📈 **Skill Assessment** - Comprehensive skill quiz for personality profiling
+
+## Technology Stack
+
+### Frontend
+- React 18 + TypeScript
+- Vite
+- TailwindCSS + shadcn/ui
+- React Query
+- Framer Motion
+- Recharts
+
+### Backend
+- Node.js + Express
+- MongoDB + Mongoose
+- JWT Authentication
+- bcryptjs
+
+## Documentation
+
+- **FRONTEND_SUMMARY.md** - Complete API documentation for backend team
+- **IMPLEMENTATION_SUMMARY.md** - Frontend implementation details
+- **backend/README.md** - Backend API documentation
+- **backend/SETUP.md** - Backend setup guide
 
 ## Project info
 

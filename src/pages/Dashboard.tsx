@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { dashboardAPI } from "@/lib/api";
 import {
   RadarChart,
   PolarGrid,
@@ -29,50 +31,74 @@ import {
   Flame,
 } from "lucide-react";
 
-const skillsData = [
-  { skill: "Logical", score: 85, fullMark: 100 },
-  { skill: "Math", score: 78, fullMark: 100 },
-  { skill: "Pattern", score: 92, fullMark: 100 },
-  { skill: "Problem", score: 70, fullMark: 100 },
-  { skill: "Technical", score: 88, fullMark: 100 },
-];
-
-const recentGames = [
-  { name: "Pattern Recognition", score: 92, time: "2 hours ago", xp: 150 },
-  { name: "Logical Reasoning", score: 85, time: "Yesterday", xp: 120 },
-  { name: "Mathematical Thinking", score: 78, time: "2 days ago", xp: 100 },
-];
-
-const badges = [
-  { name: "Quick Thinker", icon: <Zap className="w-5 h-5" />, earned: true },
-  { name: "Pattern Master", icon: <Target className="w-5 h-5" />, earned: true },
-  { name: "Math Wizard", icon: <Brain className="w-5 h-5" />, earned: false },
-  { name: "Problem Solver", icon: <Trophy className="w-5 h-5" />, earned: false },
-];
-
-const leaderboard = [
-  { rank: 1, name: "Alex T.", score: 2850, avatar: "🏆" },
-  { rank: 2, name: "Sarah M.", score: 2720, avatar: "🥈" },
-  { rank: 3, name: "John D.", score: 2680, avatar: "🥉" },
-  { rank: 4, name: "You", score: 2450, avatar: "⭐", isUser: true },
-  { rank: 5, name: "Mike R.", score: 2380, avatar: "👤" },
-];
-
 export default function Dashboard() {
   const navigate = useNavigate();
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["dashboard"],
+    queryFn: () => dashboardAPI.get(),
+  });
 
-  const userStats = {
-    level: 12,
-    totalXP: 2450,
-    xpToNextLevel: 3000,
-    gamesPlayed: 18,
-    streak: 5,
-    iqScore: 83,
-    careerReadiness: 78,
-  };
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="min-h-screen bg-background py-12">
+          <div className="container mx-auto px-4">
+            <div className="text-center">
+              <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+              <p className="text-muted-foreground">Loading dashboard...</p>
+            </div>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <Layout>
+        <div className="min-h-screen bg-background py-12">
+          <div className="container mx-auto px-4">
+            <div className="text-center">
+              <p className="text-destructive">Failed to load dashboard data</p>
+            </div>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  const userStats = data.user;
+  const skillsData = [
+    { skill: "Logical", score: data.skillScores.logical, fullMark: 100 },
+    { skill: "Math", score: data.skillScores.mathematical, fullMark: 100 },
+    { skill: "Pattern", score: data.skillScores.pattern, fullMark: 100 },
+    { skill: "Problem", score: data.skillScores.problemSolving, fullMark: 100 },
+    { skill: "Technical", score: data.skillScores.technical, fullMark: 100 },
+  ];
+
+  const recentGames = data.recentGames.map((game) => ({
+    name: game.gameType.split("-").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" "),
+    score: game.score,
+    time: new Date(game.completedAt).toLocaleDateString(),
+    xp: game.xpEarned,
+  }));
+
+  const badges = data.badges.map((badge) => ({
+    name: badge.name,
+    icon: <Zap className="w-5 h-5" />, // You can map icon names to components
+    earned: badge.earned,
+  }));
+
+  const leaderboard = data.leaderboard.topPlayers.map((player) => ({
+    rank: player.rank,
+    name: player.name,
+    score: player.totalXP,
+    avatar: player.avatar || "👤",
+    isUser: player.rank === data.leaderboard.userRank,
+  }));
 
   const xpProgress = (userStats.totalXP / userStats.xpToNextLevel) * 100;
-  const completedGames = 4;
+  const completedGames = 4; // This should come from API
   const totalGames = 6;
 
   return (
@@ -255,12 +281,12 @@ export default function Dashboard() {
                 <div className="w-16 h-16 mx-auto mb-3 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
                   <Brain className="w-8 h-8 text-white" />
                 </div>
-                <h4 className="text-xl font-bold text-foreground mb-1">Data Scientist</h4>
+                <h4 className="text-xl font-bold text-foreground mb-1">{data.recommendedCareer.title}</h4>
                 <Badge variant="outline" className="text-violet-400 border-violet-400/50 mb-3">
-                  85% Match
+                  {data.recommendedCareer.matchPercentage}% Match
                 </Badge>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Your analytical and pattern recognition skills make you perfect for this role
+                  {data.recommendedCareer.description}
                 </p>
                 <Button variant="hero" size="sm" onClick={() => navigate("/career-results")}>
                   View Details

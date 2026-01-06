@@ -14,89 +14,100 @@ import {
 } from "lucide-react";
 import { jsPDF } from "jspdf";
 import { toast } from "@/hooks/use-toast";
-
-const skillsData = [
-  { skill: "Problem Solving", score: 85, fullMark: 100 },
-  { skill: "Communication", score: 78, fullMark: 100 },
-  { skill: "Leadership", score: 65, fullMark: 100 },
-  { skill: "Technical Skills", score: 90, fullMark: 100 },
-  { skill: "Creativity", score: 72, fullMark: 100 },
-  { skill: "Teamwork", score: 88, fullMark: 100 },
-];
-
-const topCareers = [
-  {
-    title: "Software Engineer",
-    matchPercentage: 92,
-    salary: "$95k - $150k",
-    growth: "+25%",
-    description: "Build innovative software solutions",
-  },
-  {
-    title: "Data Scientist",
-    matchPercentage: 87,
-    salary: "$90k - $140k",
-    growth: "+31%",
-    description: "Analyze data to drive business decisions",
-  },
-  {
-    title: "Product Manager",
-    matchPercentage: 84,
-    salary: "$100k - $160k",
-    growth: "+22%",
-    description: "Lead product development and strategy",
-  },
-  {
-    title: "UX Designer",
-    matchPercentage: 79,
-    salary: "$75k - $120k",
-    growth: "+18%",
-    description: "Create user-centered digital experiences",
-  },
-  {
-    title: "Cloud Architect",
-    matchPercentage: 76,
-    salary: "$110k - $180k",
-    growth: "+28%",
-    description: "Design scalable cloud infrastructure",
-  },
-];
-
-const personalityTraits = [
-  { trait: "Analytical Thinker", score: 85 },
-  { trait: "Detail-Oriented", score: 78 },
-  { trait: "Team Player", score: 88 },
-  { trait: "Self-Motivated", score: 82 },
-  { trait: "Adaptable", score: 75 },
-];
-
-const recommendations = [
-  {
-    icon: GraduationCap,
-    title: "Recommended Courses",
-    items: [
-      "Advanced Data Structures",
-      "Machine Learning Fundamentals",
-      "Product Management Certification",
-    ],
-  },
-  {
-    icon: Target,
-    title: "Skills to Develop",
-    items: ["Public Speaking", "Strategic Planning", "Team Leadership"],
-  },
-  {
-    icon: TrendingUp,
-    title: "Next Steps",
-    items: [
-      "Build portfolio projects",
-      "Network with industry professionals",
-      "Apply for internships",
-    ],
-  },
-];
+import { useQuery } from "@tanstack/react-query";
+import { dashboardAPI, careerAPI } from "@/lib/api";
 
 export default function CareerResults() {
+  // Fetch dashboard data to get skill scores
+  const { data: dashboardData } = useQuery({
+    queryKey: ["dashboard"],
+    queryFn: () => dashboardAPI.get(),
+  });
+
+  // Fetch career prediction
+  const { data: careerData, isLoading, error } = useQuery({
+    queryKey: ["career-prediction"],
+    queryFn: () => {
+      if (!dashboardData) throw new Error("Dashboard data required");
+      return careerAPI.predict({
+        gameScores: {
+          logical: dashboardData.skillScores.logical,
+          mathematical: dashboardData.skillScores.mathematical,
+          pattern: dashboardData.skillScores.pattern,
+          problemSolving: dashboardData.skillScores.problemSolving,
+          technical: dashboardData.skillScores.technical,
+        },
+        totalXP: dashboardData.user.totalXP,
+        averageAccuracy: 78, // This should come from game history
+      });
+    },
+    enabled: !!dashboardData,
+  });
+
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="min-h-screen bg-background py-12">
+          <div className="container mx-auto px-4">
+            <div className="text-center">
+              <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+              <p className="text-muted-foreground">Generating career predictions...</p>
+            </div>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (error || !careerData) {
+    return (
+      <Layout>
+        <div className="min-h-screen bg-background py-12">
+          <div className="container mx-auto px-4">
+            <div className="text-center">
+              <p className="text-destructive">Failed to load career predictions</p>
+            </div>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+
+  const skillsData = [
+    { skill: "Problem Solving", score: careerData.strengths.find(s => s.skill.includes("Problem"))?.score || 85, fullMark: 100 },
+    { skill: "Communication", score: 78, fullMark: 100 },
+    { skill: "Leadership", score: 65, fullMark: 100 },
+    { skill: "Technical Skills", score: careerData.strengths.find(s => s.skill.includes("Technical"))?.score || 90, fullMark: 100 },
+    { skill: "Creativity", score: 72, fullMark: 100 },
+    { skill: "Teamwork", score: 88, fullMark: 100 },
+  ];
+
+  const topCareers = careerData.topCareers;
+  const personalityTraits = [
+    { trait: "Analytical Thinker", score: careerData.strengths[0]?.score || 85 },
+    { trait: "Detail-Oriented", score: 78 },
+    { trait: "Team Player", score: 88 },
+    { trait: "Self-Motivated", score: 82 },
+    { trait: "Adaptable", score: 75 },
+  ];
+
+  const recommendations = [
+    {
+      icon: GraduationCap,
+      title: "Recommended Courses",
+      items: careerData.recommendations.courses,
+    },
+    {
+      icon: Target,
+      title: "Skills to Develop",
+      items: careerData.recommendations.skillsToDevelop,
+    },
+    {
+      icon: TrendingUp,
+      title: "Next Steps",
+      items: careerData.recommendations.nextSteps,
+    },
+  ];
   const handleDownloadPDF = () => {
     const doc = new jsPDF();
     

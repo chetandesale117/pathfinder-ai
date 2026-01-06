@@ -9,7 +9,7 @@ import { GameResults } from "@/components/games/GameResults";
 import { Calculator, ArrowLeft, SkipForward } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
-import axios from "axios";
+import { gameAPI } from "@/lib/api";
 
 interface Question {
   id: number;
@@ -197,13 +197,17 @@ export default function MathematicalThinking() {
   const submitResults = async () => {
     setIsComplete(true);
     try {
-      await axios.post("/api/game/submit", {
+      await gameAPI.submit({
         gameType: "mathematical-thinking",
         accuracy: (correctAnswers / questions.length) * 100,
         timeTaken: totalTime,
         score,
         xpEarned: xp,
         skipsUsed,
+        totalQuestions: questions.length,
+        correctAnswers,
+        streak,
+        avgTimePerQuestion: totalTime / questions.length,
       });
     } catch {
       // Silently handle

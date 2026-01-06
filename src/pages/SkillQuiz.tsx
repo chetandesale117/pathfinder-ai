@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight, CheckCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
+import { skillQuizAPI } from "@/lib/api";
 
 const skillQuestions = [
   {
@@ -119,15 +120,22 @@ export default function SkillQuiz() {
   const handleSubmit = async () => {
     setIsSubmitting(true);
     
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    
-    toast({
-      title: "Skills Assessment Complete!",
-      description: "Your skill evaluation has been submitted successfully.",
-    });
-    
-    navigate("/career-results");
+    try {
+      await skillQuizAPI.submit(answers);
+      toast({
+        title: "Skills Assessment Complete!",
+        description: "Your skill evaluation has been submitted successfully.",
+      });
+      navigate("/career-results");
+    } catch (error: any) {
+      toast({
+        title: "Submission failed",
+        description: error.message || "Could not submit assessment",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const currentQ = skillQuestions[currentQuestion];

@@ -10,6 +10,8 @@ import { Brain, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 import { gameAPI } from "@/lib/api";
+import { useGameQuestions } from "@/hooks/useGameQuestions";
+import { logicalReasoningQuestions } from "@/lib/gamesData";
 
 interface Question {
   id: number;
@@ -20,91 +22,9 @@ interface Question {
   difficulty: "Easy" | "Medium" | "Hard" | "Expert";
 }
 
-const questions: Question[] = [
-  {
-    id: 1,
-    question: "What comes next in the sequence: 2, 6, 12, 20, 30, ?",
-    options: ["40", "42", "44", "46"],
-    correctAnswer: 1,
-    explanation: "Each difference increases by 2: +4, +6, +8, +10, +12 = 42",
-    difficulty: "Easy",
-  },
-  {
-    id: 2,
-    question: "If all Bloops are Razzies and all Razzies are Lazzies, then all Bloops are definitely Lazzies?",
-    options: ["True", "False", "Cannot be determined", "Sometimes"],
-    correctAnswer: 0,
-    explanation: "This is a classic syllogism. If A⊂B and B⊂C, then A⊂C.",
-    difficulty: "Easy",
-  },
-  {
-    id: 3,
-    question: "Which number doesn't belong: 2, 3, 6, 7, 8, 14, 15, 30?",
-    options: ["__(6)__", "7", "8", "__(15)__"],
-    correctAnswer: 2,
-    explanation: "8 is the only number that doesn't follow the pattern of alternating prime and prime×2.",
-    difficulty: "Medium",
-  },
-  {
-    id: 4,
-    question: "A is taller than B. C is shorter than A. B is taller than C. Who is the shortest?",
-    options: ["A", "B", "C", "Cannot be determined"],
-    correctAnswer: 2,
-    explanation: "A > B > C, so C is the shortest.",
-    difficulty: "Medium",
-  },
-  {
-    id: 5,
-    question: "Complete: 1, 1, 2, 3, 5, 8, 13, ?",
-    options: ["18", "20", "21", "24"],
-    correctAnswer: 2,
-    explanation: "This is the Fibonacci sequence. Each number is the sum of the two preceding ones: 8 + 13 = 21",
-    difficulty: "Easy",
-  },
-  {
-    id: 6,
-    question: "If you rearrange 'CIFAIPC', you get the name of a:",
-    options: ["City", "Animal", "Ocean", "Country"],
-    correctAnswer: 2,
-    explanation: "CIFAIPC rearranges to PACIFIC, which is an ocean.",
-    difficulty: "Medium",
-  },
-  {
-    id: 7,
-    question: "What is the next letter: O, T, T, F, F, S, S, ?",
-    options: ["E", "N", "T", "O"],
-    correctAnswer: 0,
-    explanation: "These are first letters of One, Two, Three, Four, Five, Six, Seven, Eight.",
-    difficulty: "Hard",
-  },
-  {
-    id: 8,
-    question: "If 5 machines take 5 minutes to make 5 widgets, how long would 100 machines take to make 100 widgets?",
-    options: ["100 minutes", "20 minutes", "5 minutes", "1 minute"],
-    correctAnswer: 2,
-    explanation: "Each machine makes 1 widget in 5 minutes. 100 machines make 100 widgets in 5 minutes.",
-    difficulty: "Hard",
-  },
-  {
-    id: 9,
-    question: "Which word does NOT belong: Apple, Banana, Carrot, Grape, Orange?",
-    options: ["Apple", "Banana", "Carrot", "Grape"],
-    correctAnswer: 2,
-    explanation: "Carrot is a vegetable; all others are fruits.",
-    difficulty: "Easy",
-  },
-  {
-    id: 10,
-    question: "If APPLE is coded as 50 and BANANA is coded as 42, what is CHERRY coded as?",
-    options: ["60", "63", "72", "81"],
-    correctAnswer: 2,
-    explanation: "Each letter value = position in alphabet. CHERRY = 3+8+5+18+18+25 = 72",
-    difficulty: "Expert",
-  },
-];
-
 export default function LogicalReasoning() {
   const navigate = useNavigate();
+  const { questions } = useGameQuestions<Question>("logical-reasoning", logicalReasoningQuestions);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [score, setScore] = useState(0);

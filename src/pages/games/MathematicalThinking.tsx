@@ -16,7 +16,7 @@ import { mathematicalThinkingQuestions } from "@/lib/gamesData";
 interface Question {
   id: number;
   question: string;
-  options: string[];
+  options: readonly string[];
   correctAnswer: number;
   explanation: string;
   difficulty: "Easy" | "Medium" | "Hard" | "Expert";

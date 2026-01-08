@@ -16,7 +16,7 @@ import { logicalReasoningQuestions } from "@/lib/gamesData";
 interface Question {
   id: number;
   question: string;
-  options: string[];
+  options: readonly string[];
   correctAnswer: number;
   explanation: string;
   difficulty: "Easy" | "Medium" | "Hard" | "Expert";
@@ -24,7 +24,7 @@ interface Question {
 
 export default function LogicalReasoning() {
   const navigate = useNavigate();
-  const { questions } = useGameQuestions<Question>("logical-reasoning", logicalReasoningQuestions);
+  const { questions } = useGameQuestions<Question>("logical-reasoning", logicalReasoningQuestions as unknown as Question[]);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [score, setScore] = useState(0);

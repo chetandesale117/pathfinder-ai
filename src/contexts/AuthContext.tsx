@@ -49,21 +49,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (email: string, password: string) => {
     const response = await authAPI.login(email, password);
-    if (response.success) {
+    if (response.success && response.data) {
       setUser(response.data.user);
       navigate("/dashboard");
     } else {
-      throw new Error(response.error || "Login failed");
+      throw new Error((response as any).error || "Login failed");
     }
   };
 
   const register = async (data: { email: string; password: string; name: string; age?: number; education?: string }) => {
     const response = await authAPI.register(data);
-    if (response.success) {
+    if (response.success && response.data) {
       setUser(response.data.user);
       navigate("/dashboard");
     } else {
-      throw new Error(response.error || "Registration failed");
+      throw new Error((response as any).error || "Registration failed");
     }
   };
 
@@ -96,4 +96,3 @@ export function useAuth() {
   }
   return context;
 }
-

@@ -3,9 +3,12 @@ import { gamesAPI } from "@/lib/api";
 
 /**
  * Fetches game questions from backend with a local fallback.
+ * Accepts readonly arrays from const assertions and returns mutable copies.
  */
-export function useGameQuestions<T extends Record<string, any>>(gameType: string, fallback: readonly T[]) {
-  const [questions, setQuestions] = useState<T[]>(() => [...fallback]);
+export function useGameQuestions<T>(gameType: string, fallback: readonly T[]) {
+  const [questions, setQuestions] = useState<T[]>(() => 
+    fallback.map(q => ({ ...q })) as T[]
+  );
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {

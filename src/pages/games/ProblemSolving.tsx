@@ -18,7 +18,7 @@ interface Question {
   scenario: string;
   context: string;
   question: string;
-  options: { text: string; score: number; feedback: string }[];
+  options: readonly { text: string; score: number; feedback: string }[];
   difficulty: "Easy" | "Medium" | "Hard" | "Expert";
 }
 

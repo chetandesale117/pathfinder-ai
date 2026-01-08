@@ -161,8 +161,8 @@ const GameCard = ({
 
 export default function Games() {
   const navigate = useNavigate();
-  const [games, setGames] = useState<(GameMeta & { progress?: number; isCompleted?: boolean; isLocked?: boolean })[]>(
-    getLocalGames()
+  const [games, setGames] = useState<(GameMeta & { progress: number; isCompleted: boolean; isLocked: boolean })[]>(
+    getLocalGames().map(g => ({ ...g, progress: 0, isCompleted: false, isLocked: g.isLocked ?? false }))
   );
   const [userStats] = useState({
     level: 5,
@@ -319,4 +319,3 @@ export default function Games() {
     </Layout>
   );
 }
-

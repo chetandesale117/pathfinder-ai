@@ -92,7 +92,7 @@ export default function Index() {
               className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground leading-tight mb-6"
             >
               Discover Your{" "}
-              <span className="text-gradient">Perfect Career</span> Path
+              <span className="text-red-500">Perfect Career</span> Path
             </motion.h1>
 
             <motion.p

@@ -12,7 +12,7 @@ export const register = handleAsync(async (req, res) => {
   // Check if user already exists
   const existingUser = await User.findOne({ email });
   if (existingUser) {
-    return errorResponse(res, 'User with this email already exists', 'USER_EXISTS', 400);
+    return errorResponse(res, 'User already exists', 'USER_EXISTS', 409);
   }
 
   // Create user

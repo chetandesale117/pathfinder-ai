@@ -11,127 +11,18 @@ import { Code, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 import { gameAPI } from "@/lib/api";
+import { useGameQuestions } from "@/hooks/useGameQuestions";
+import { technicalKnowledgeQuestions } from "@/lib/gamesData";
 
 interface Question {
   id: number;
   category: string;
   question: string;
-  options: string[];
+  options: readonly string[];
   correctAnswer: number;
   explanation: string;
   difficulty: "Easy" | "Medium" | "Hard" | "Expert";
 }
-
-const questions: Question[] = [
-  {
-    id: 1,
-    category: "Web Technologies",
-    question: "What does HTML stand for?",
-    options: ["Hyper Text Markup Language", "High Tech Modern Language", "Hyper Transfer Markup Language", "Home Tool Markup Language"],
-    correctAnswer: 0,
-    explanation: "HTML = Hyper Text Markup Language, the standard markup language for web pages.",
-    difficulty: "Easy",
-  },
-  {
-    id: 2,
-    category: "Programming",
-    question: "Which of these is NOT a programming language?",
-    options: ["Python", "Java", "HTML", "C++"],
-    correctAnswer: 2,
-    explanation: "HTML is a markup language, not a programming language.",
-    difficulty: "Easy",
-  },
-  {
-    id: 3,
-    category: "Data Structures",
-    question: "What is the time complexity of binary search?",
-    options: ["O(n)", "O(log n)", "O(n²)", "O(1)"],
-    correctAnswer: 1,
-    explanation: "Binary search divides the search space in half each time, giving O(log n).",
-    difficulty: "Medium",
-  },
-  {
-    id: 4,
-    category: "AI/ML",
-    question: "What does 'ML' stand for in AI/ML?",
-    options: ["Machine Learning", "Meta Language", "Markup Logic", "Memory Layer"],
-    correctAnswer: 0,
-    explanation: "ML stands for Machine Learning, a subset of AI.",
-    difficulty: "Easy",
-  },
-  {
-    id: 5,
-    category: "Databases",
-    question: "Which SQL clause is used to filter records?",
-    options: ["SELECT", "FROM", "WHERE", "ORDER BY"],
-    correctAnswer: 2,
-    explanation: "WHERE clause is used to filter records based on conditions.",
-    difficulty: "Easy",
-  },
-  {
-    id: 6,
-    category: "Web Technologies",
-    question: "What is the purpose of CSS?",
-    options: ["Server-side scripting", "Styling web pages", "Database management", "Network security"],
-    correctAnswer: 1,
-    explanation: "CSS (Cascading Style Sheets) is used for styling and layout of web pages.",
-    difficulty: "Easy",
-  },
-  {
-    id: 7,
-    category: "Programming",
-    question: "What is a 'callback' in programming?",
-    options: ["A return statement", "A function passed as an argument", "A loop structure", "An error handler"],
-    correctAnswer: 1,
-    explanation: "A callback is a function passed to another function to be executed later.",
-    difficulty: "Medium",
-  },
-  {
-    id: 8,
-    category: "AI/ML",
-    question: "Which algorithm is commonly used for classification problems?",
-    options: ["Linear Regression", "K-Means", "Decision Trees", "PCA"],
-    correctAnswer: 2,
-    explanation: "Decision Trees are widely used for classification tasks.",
-    difficulty: "Medium",
-  },
-  {
-    id: 9,
-    category: "Debugging",
-    question: "What does this code output? console.log(typeof null)",
-    options: ["'null'", "'undefined'", "'object'", "'number'"],
-    correctAnswer: 2,
-    explanation: "In JavaScript, typeof null returns 'object' - a known quirk of the language.",
-    difficulty: "Hard",
-  },
-  {
-    id: 10,
-    category: "Data Interpretation",
-    question: "In REST APIs, what does the status code 404 indicate?",
-    options: ["Success", "Created", "Not Found", "Server Error"],
-    correctAnswer: 2,
-    explanation: "404 means the requested resource was not found on the server.",
-    difficulty: "Easy",
-  },
-  {
-    id: 11,
-    category: "Programming",
-    question: "What is the output of: [1,2,3].map(x => x * 2)?",
-    options: ["[1,2,3]", "[2,4,6]", "[1,4,9]", "6"],
-    correctAnswer: 1,
-    explanation: "map() applies the function to each element: 1*2=2, 2*2=4, 3*2=6.",
-    difficulty: "Medium",
-  },
-  {
-    id: 12,
-    category: "AI/ML",
-    question: "What is 'overfitting' in machine learning?",
-    options: ["Model is too simple", "Model performs well on training but poorly on new data", "Model is too slow", "Model has too few parameters"],
-    correctAnswer: 1,
-    explanation: "Overfitting occurs when a model learns training data too well, including noise.",
-    difficulty: "Hard",
-  },
-];
 
 const categoryColors: Record<string, string> = {
   "Web Technologies": "bg-cyan-500/20 text-cyan-400 border-cyan-500/30",
@@ -145,6 +36,7 @@ const categoryColors: Record<string, string> = {
 
 export default function TechnicalKnowledge() {
   const navigate = useNavigate();
+  const { questions } = useGameQuestions<Question>("technical-knowledge", technicalKnowledgeQuestions);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [score, setScore] = useState(0);
@@ -157,6 +49,16 @@ export default function TechnicalKnowledge() {
   const [questionStartTime, setQuestionStartTime] = useState(Date.now());
   const [timerKey, setTimerKey] = useState(0);
   const [categoryScores, setCategoryScores] = useState<Record<string, { correct: number; total: number }>>({});
+
+  if (!questions.length) {
+    return (
+      <Layout>
+        <div className="min-h-screen flex items-center justify-center bg-background">
+          <p className="text-foreground">Loading questions...</p>
+        </div>
+      </Layout>
+    );
+  }
 
   const currentQ = questions[currentQuestion];
   const timePerQuestion = currentQ.difficulty === "Easy" ? 20 : currentQ.difficulty === "Medium" ? 30 : 40;

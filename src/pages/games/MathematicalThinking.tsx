@@ -10,6 +10,8 @@ import { Calculator, ArrowLeft, SkipForward } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 import { gameAPI } from "@/lib/api";
+import { useGameQuestions } from "@/hooks/useGameQuestions";
+import { mathematicalThinkingQuestions } from "@/lib/gamesData";
 
 interface Question {
   id: number;
@@ -20,91 +22,9 @@ interface Question {
   difficulty: "Easy" | "Medium" | "Hard" | "Expert";
 }
 
-const questions: Question[] = [
-  {
-    id: 1,
-    question: "What is 15% of 240?",
-    options: ["32", "36", "38", "42"],
-    correctAnswer: 1,
-    explanation: "15% of 240 = 0.15 × 240 = 36",
-    difficulty: "Easy",
-  },
-  {
-    id: 2,
-    question: "If x + 5 = 12, what is 2x + 3?",
-    options: ["15", "17", "19", "21"],
-    correctAnswer: 1,
-    explanation: "x = 7, so 2x + 3 = 14 + 3 = 17",
-    difficulty: "Easy",
-  },
-  {
-    id: 3,
-    question: "What is the square root of 169?",
-    options: ["11", "12", "13", "14"],
-    correctAnswer: 2,
-    explanation: "√169 = 13 because 13 × 13 = 169",
-    difficulty: "Easy",
-  },
-  {
-    id: 4,
-    question: "A shirt costs $80 after a 20% discount. What was the original price?",
-    options: ["$96", "$100", "$104", "$120"],
-    correctAnswer: 1,
-    explanation: "If 80% = $80, then 100% = $80 ÷ 0.8 = $100",
-    difficulty: "Medium",
-  },
-  {
-    id: 5,
-    question: "What is 3⁴ + 2³?",
-    options: ["81", "85", "89", "91"],
-    correctAnswer: 2,
-    explanation: "3⁴ = 81 and 2³ = 8, so 81 + 8 = 89",
-    difficulty: "Medium",
-  },
-  {
-    id: 6,
-    question: "If a train travels at 60 km/h, how long to cover 150 km?",
-    options: ["2 hours", "2.5 hours", "3 hours", "3.5 hours"],
-    correctAnswer: 1,
-    explanation: "Time = Distance ÷ Speed = 150 ÷ 60 = 2.5 hours",
-    difficulty: "Medium",
-  },
-  {
-    id: 7,
-    question: "Solve: (2/3) × (9/4) = ?",
-    options: ["3/2", "6/12", "18/12", "1/2"],
-    correctAnswer: 0,
-    explanation: "(2×9)/(3×4) = 18/12 = 3/2",
-    difficulty: "Medium",
-  },
-  {
-    id: 8,
-    question: "If the ratio of boys to girls is 3:5 and there are 24 boys, how many girls?",
-    options: ["32", "36", "40", "48"],
-    correctAnswer: 2,
-    explanation: "3:5 = 24:x → x = (24 × 5) ÷ 3 = 40",
-    difficulty: "Hard",
-  },
-  {
-    id: 9,
-    question: "What is the area of a triangle with base 12 and height 8?",
-    options: ["42", "48", "52", "96"],
-    correctAnswer: 1,
-    explanation: "Area = (1/2) × base × height = (1/2) × 12 × 8 = 48",
-    difficulty: "Easy",
-  },
-  {
-    id: 10,
-    question: "If f(x) = 2x² - 3x + 1, what is f(3)?",
-    options: ["8", "10", "12", "14"],
-    correctAnswer: 1,
-    explanation: "f(3) = 2(9) - 3(3) + 1 = 18 - 9 + 1 = 10",
-    difficulty: "Hard",
-  },
-];
-
 export default function MathematicalThinking() {
   const navigate = useNavigate();
+  const { questions } = useGameQuestions<Question>("mathematical-thinking", mathematicalThinkingQuestions);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [score, setScore] = useState(0);
@@ -117,6 +37,16 @@ export default function MathematicalThinking() {
   const [questionStartTime, setQuestionStartTime] = useState(Date.now());
   const [timerKey, setTimerKey] = useState(0);
   const [skipsUsed, setSkipsUsed] = useState(0);
+
+  if (!questions.length) {
+    return (
+      <Layout>
+        <div className="min-h-screen flex items-center justify-center bg-background">
+          <p className="text-foreground">Loading questions...</p>
+        </div>
+      </Layout>
+    );
+  }
 
   const currentQ = questions[currentQuestion];
   const timePerQuestion = currentQ.difficulty === "Easy" ? 20 : currentQ.difficulty === "Medium" ? 30 : 40;

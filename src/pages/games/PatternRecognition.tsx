@@ -10,6 +10,8 @@ import { Shapes, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 import { gameAPI } from "@/lib/api";
+import { useGameQuestions } from "@/hooks/useGameQuestions";
+import { patternRecognitionQuestions } from "@/lib/gamesData";
 
 interface Question {
   id: number;
@@ -21,101 +23,9 @@ interface Question {
   difficulty: "Easy" | "Medium" | "Hard" | "Expert";
 }
 
-const questions: Question[] = [
-  {
-    id: 1,
-    pattern: ["🔴", "🔵", "🔴", "🔵", "🔴", "?"],
-    question: "What comes next in the pattern?",
-    options: ["🔴", "🔵", "🟢", "🟡"],
-    correctAnswer: 1,
-    explanation: "The pattern alternates between red and blue circles.",
-    difficulty: "Easy",
-  },
-  {
-    id: 2,
-    pattern: ["⬛", "⬜", "⬛", "⬜⬜", "⬛", "⬜⬜⬜", "⬛", "?"],
-    question: "What comes next?",
-    options: ["⬛", "⬜⬜⬜⬜", "⬜", "⬛⬛"],
-    correctAnswer: 1,
-    explanation: "Black stays constant, white squares increase by 1 each time.",
-    difficulty: "Medium",
-  },
-  {
-    id: 3,
-    pattern: ["2", "4", "8", "16", "?"],
-    question: "Find the next number:",
-    options: ["24", "32", "30", "28"],
-    correctAnswer: 1,
-    explanation: "Each number is doubled: ×2 pattern",
-    difficulty: "Easy",
-  },
-  {
-    id: 4,
-    pattern: ["🔺", "🔺🔺", "🔺🔺🔺", "🔺🔺🔺🔺", "?"],
-    question: "Continue the sequence:",
-    options: ["🔺🔺🔺🔺🔺", "🔺🔺🔺", "🔻🔻🔻🔻🔻", "🔺"],
-    correctAnswer: 0,
-    explanation: "The triangles increase by 1 each step.",
-    difficulty: "Easy",
-  },
-  {
-    id: 5,
-    pattern: ["A1", "B2", "C3", "D4", "?"],
-    question: "What comes next?",
-    options: ["E4", "E5", "F5", "D5"],
-    correctAnswer: 1,
-    explanation: "Letters go A-E, numbers go 1-5.",
-    difficulty: "Easy",
-  },
-  {
-    id: 6,
-    pattern: ["1", "1", "2", "3", "5", "8", "?"],
-    question: "Find the missing number:",
-    options: ["11", "12", "13", "15"],
-    correctAnswer: 2,
-    explanation: "Fibonacci: each number is the sum of the previous two (5+8=13).",
-    difficulty: "Medium",
-  },
-  {
-    id: 7,
-    pattern: ["🌑", "🌒", "🌓", "🌔", "?"],
-    question: "What moon phase comes next?",
-    options: ["🌕", "🌑", "🌖", "🌘"],
-    correctAnswer: 0,
-    explanation: "Moon phases in order lead to full moon 🌕.",
-    difficulty: "Easy",
-  },
-  {
-    id: 8,
-    pattern: ["3", "6", "11", "18", "27", "?"],
-    question: "Find the pattern:",
-    options: ["36", "38", "40", "42"],
-    correctAnswer: 1,
-    explanation: "Differences increase: +3, +5, +7, +9, +11 = 38",
-    difficulty: "Hard",
-  },
-  {
-    id: 9,
-    pattern: ["🔲🔲🔲", "🔲🔳🔲", "🔲🔳🔳", "🔳🔳🔳", "?"],
-    question: "What's the next step?",
-    options: ["🔲🔲🔲", "🔳🔳🔲", "All white", "🔲🔳🔲"],
-    correctAnswer: 0,
-    explanation: "The pattern cycles back to the beginning.",
-    difficulty: "Hard",
-  },
-  {
-    id: 10,
-    pattern: ["1", "4", "9", "16", "25", "?"],
-    question: "Complete the sequence:",
-    options: ["30", "32", "36", "49"],
-    correctAnswer: 2,
-    explanation: "Perfect squares: 1², 2², 3², 4², 5², 6² = 36",
-    difficulty: "Medium",
-  },
-];
-
 export default function PatternRecognition() {
   const navigate = useNavigate();
+  const { questions } = useGameQuestions<Question>("pattern-recognition", patternRecognitionQuestions);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [score, setScore] = useState(0);
@@ -127,6 +37,16 @@ export default function PatternRecognition() {
   const [totalTime, setTotalTime] = useState(0);
   const [questionStartTime, setQuestionStartTime] = useState(Date.now());
   const [timerKey, setTimerKey] = useState(0);
+
+  if (!questions.length) {
+    return (
+      <Layout>
+        <div className="min-h-screen flex items-center justify-center bg-background">
+          <p className="text-foreground">Loading questions...</p>
+        </div>
+      </Layout>
+    );
+  }
 
   const currentQ = questions[currentQuestion];
   const timePerQuestion = currentQ.difficulty === "Easy" ? 25 : currentQ.difficulty === "Medium" ? 30 : 40;

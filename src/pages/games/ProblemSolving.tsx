@@ -10,6 +10,8 @@ import { Lightbulb, ArrowLeft, Info } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 import { gameAPI } from "@/lib/api";
+import { useGameQuestions } from "@/hooks/useGameQuestions";
+import { problemSolvingQuestions } from "@/lib/gamesData";
 
 interface Question {
   id: number;
@@ -20,115 +22,9 @@ interface Question {
   difficulty: "Easy" | "Medium" | "Hard" | "Expert";
 }
 
-const questions: Question[] = [
-  {
-    id: 1,
-    scenario: "Team Conflict",
-    context: "You're a team lead and two of your best developers are in a heated disagreement about which technology to use for a new project. The deadline is approaching.",
-    question: "What's your approach?",
-    options: [
-      { text: "Make the decision yourself to save time", score: 15, feedback: "Quick but may cause resentment. Sometimes necessary under pressure." },
-      { text: "Schedule a meeting to hear both sides and find a compromise", score: 30, feedback: "Excellent! This builds consensus and respects both opinions." },
-      { text: "Let them figure it out on their own", score: 5, feedback: "Avoids your leadership responsibility and may delay the project." },
-      { text: "Ask a senior architect to decide", score: 20, feedback: "Good for technical decisions, but may undermine your authority." },
-    ],
-    difficulty: "Medium",
-  },
-  {
-    id: 2,
-    scenario: "Client Emergency",
-    context: "A major client reports a critical bug in production at 5 PM on Friday. Your team is exhausted after a long week, and it's unclear how long the fix will take.",
-    question: "How do you handle this?",
-    options: [
-      { text: "Tell the client it will be fixed Monday", score: 10, feedback: "May damage client relationship for a critical issue." },
-      { text: "Ask for volunteers and offer compensation for overtime", score: 30, feedback: "Respects team while addressing urgency. Great balance!" },
-      { text: "Mandate the team to stay and fix it", score: 15, feedback: "Gets it done but hurts morale and work-life balance." },
-      { text: "Try to fix it yourself over the weekend", score: 20, feedback: "Admirable but not scalable or sustainable." },
-    ],
-    difficulty: "Hard",
-  },
-  {
-    id: 3,
-    scenario: "Budget Cut",
-    context: "Your department's budget has been cut by 20%. You need to reduce costs without significantly impacting productivity.",
-    question: "What's your strategy?",
-    options: [
-      { text: "Lay off the newest team members", score: 10, feedback: "May seem unfair and lose valuable fresh perspectives." },
-      { text: "Cut training and development programs", score: 5, feedback: "Short-term saving but hurts long-term growth." },
-      { text: "Review all expenses and optimize workflows first", score: 30, feedback: "Smart approach - find inefficiencies before cutting people." },
-      { text: "Ask for voluntary reduced hours", score: 20, feedback: "Creative but may not meet the full 20% requirement." },
-    ],
-    difficulty: "Hard",
-  },
-  {
-    id: 4,
-    scenario: "Innovation vs. Stability",
-    context: "Your company uses an old but reliable system. A new technology could improve efficiency by 40% but carries implementation risks.",
-    question: "What do you recommend?",
-    options: [
-      { text: "Stick with the current system - if it works, don't fix it", score: 10, feedback: "Safe but may cause the company to fall behind competitors." },
-      { text: "Propose a pilot project to test the new technology", score: 30, feedback: "Excellent! Manages risk while exploring innovation." },
-      { text: "Push for immediate full migration", score: 15, feedback: "Bold but risky without proper testing." },
-      { text: "Wait to see what competitors do first", score: 5, feedback: "Too passive - you might miss the opportunity." },
-    ],
-    difficulty: "Medium",
-  },
-  {
-    id: 5,
-    scenario: "Underperforming Employee",
-    context: "A previously high-performing team member has been underperforming for the past two months. You've noticed they seem distracted.",
-    question: "How do you address this?",
-    options: [
-      { text: "Have a private, empathetic conversation to understand the situation", score: 30, feedback: "Perfect approach - shows care while addressing the issue." },
-      { text: "Put them on a performance improvement plan immediately", score: 15, feedback: "May be necessary later, but premature without understanding the cause." },
-      { text: "Ignore it and hope it improves", score: 5, feedback: "Avoids confrontation but the problem may worsen." },
-      { text: "Publicly address their performance in a team meeting", score: 0, feedback: "Never appropriate - damages trust and morale." },
-    ],
-    difficulty: "Medium",
-  },
-  {
-    id: 6,
-    scenario: "Ethical Dilemma",
-    context: "You discover that a colleague has been slightly inflating their project hours. They're a single parent struggling financially.",
-    question: "What do you do?",
-    options: [
-      { text: "Report it to HR immediately", score: 20, feedback: "Follows policy but lacks compassion for circumstances." },
-      { text: "Talk to them privately first and encourage them to stop", score: 25, feedback: "Balanced approach - gives them a chance to correct course." },
-      { text: "Ignore it - it's not your business", score: 5, feedback: "Ignoring ethical issues can enable larger problems." },
-      { text: "Help them find legitimate financial resources", score: 30, feedback: "Addresses root cause while maintaining integrity." },
-    ],
-    difficulty: "Expert",
-  },
-  {
-    id: 7,
-    scenario: "Meeting Efficiency",
-    context: "Your team spends 15+ hours per week in meetings, leaving little time for actual work. Productivity is suffering.",
-    question: "How do you improve this?",
-    options: [
-      { text: "Cancel all recurring meetings", score: 10, feedback: "Too extreme - some meetings are valuable." },
-      { text: "Audit meetings and implement 'no meeting' blocks", score: 30, feedback: "Excellent! Data-driven approach with protected focus time." },
-      { text: "Make all meetings optional", score: 15, feedback: "May help but important discussions might be missed." },
-      { text: "Shorten all meetings to 15 minutes", score: 20, feedback: "Good idea but may not suit all meeting types." },
-    ],
-    difficulty: "Easy",
-  },
-  {
-    id: 8,
-    scenario: "Knowledge Transfer",
-    context: "Your senior developer who holds critical system knowledge is leaving in 2 weeks. Documentation is minimal.",
-    question: "What's your priority?",
-    options: [
-      { text: "Try to convince them to stay longer", score: 10, feedback: "Unlikely to work and delays the real solution." },
-      { text: "Pair them with other developers and record knowledge sessions", score: 30, feedback: "Best use of remaining time - captures tacit knowledge." },
-      { text: "Ask them to write comprehensive documentation", score: 20, feedback: "Helpful but written docs often miss practical insights." },
-      { text: "Plan to reverse-engineer the system after they leave", score: 5, feedback: "Extremely inefficient and risky." },
-    ],
-    difficulty: "Medium",
-  },
-];
-
 export default function ProblemSolving() {
   const navigate = useNavigate();
+  const { questions } = useGameQuestions<Question>("problem-solving", problemSolvingQuestions);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [score, setScore] = useState(0);
@@ -141,6 +37,16 @@ export default function ProblemSolving() {
   const [questionStartTime, setQuestionStartTime] = useState(Date.now());
   const [timerKey, setTimerKey] = useState(0);
   const [showFeedback, setShowFeedback] = useState<string | null>(null);
+
+  if (!questions.length) {
+    return (
+      <Layout>
+        <div className="min-h-screen flex items-center justify-center bg-background">
+          <p className="text-foreground">Loading scenarios...</p>
+        </div>
+      </Layout>
+    );
+  }
 
   const currentQ = questions[currentQuestion];
   const timePerQuestion = 60; // More time for scenarios

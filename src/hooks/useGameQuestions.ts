@@ -2,38 +2,32 @@ import { useEffect, useState } from "react";
 import { gamesAPI } from "@/lib/api";
 
 /**
- * Fetch game questions from API with fallback to local mock data.
+ * Fetches game questions from backend with a local fallback.
  */
-export function useGameQuestions<T>(gameType: string, fallback: T[]) {
-  const [questions, setQuestions] = useState<T[]>(fallback);
-  const [isLoading, setIsLoading] = useState(false);
+export function useGameQuestions<T extends Record<string, any>>(gameType: string, fallback: readonly T[]) {
+  const [questions, setQuestions] = useState<T[]>(() => [...fallback]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    let isMounted = true;
+    let mounted = true;
     const fetchQuestions = async () => {
-      setIsLoading(true);
+      setLoading(true);
       try {
-        const qs = await gamesAPI.getQuestions(gameType, { shuffle: true });
-        if (isMounted && qs?.length) {
-          setQuestions(qs as T[]);
+        const remote = await gamesAPI.getQuestions(gameType, { shuffle: true });
+        if (mounted && Array.isArray(remote) && remote.length > 0) {
+          setQuestions(remote as T[]);
         }
       } catch {
-        if (isMounted) {
-          setQuestions(fallback);
-        }
+        // fallback stays
       } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
+        if (mounted) setLoading(false);
       }
     };
-
     fetchQuestions();
     return () => {
-      isMounted = false;
+      mounted = false;
     };
-  }, [gameType, fallback]);
+  }, [gameType]);
 
-  return { questions, isLoading };
+  return { questions, loading };
 }
-

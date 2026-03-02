@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
@@ -15,12 +14,11 @@ import {
   Clock,
   Zap,
   Star,
-  Lock,
   CheckCircle,
   Play,
 } from "lucide-react";
-import { gamesAPI } from "@/lib/api";
-import { getLocalGames, GameMeta } from "@/lib/gamesData";
+import { getLocalGames } from "@/lib/gamesData";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface GameCardProps {
   id: string;
@@ -85,7 +83,7 @@ const GameCard = ({
     {isLocked && (
       <div className="absolute inset-0 bg-background/60 backdrop-blur-sm z-10 flex items-center justify-center">
         <div className="text-center">
-          <Lock className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+          <span className="text-4xl mb-2 block">🔒</span>
           <p className="text-sm text-muted-foreground">Complete previous games</p>
         </div>
       </div>
@@ -161,50 +159,41 @@ const GameCard = ({
 
 export default function Games() {
   const navigate = useNavigate();
-  const [games, setGames] = useState<(GameMeta & { progress: number; isCompleted: boolean; isLocked: boolean })[]>(
-    getLocalGames().map(g => ({ ...g, progress: 0, isCompleted: false, isLocked: g.isLocked ?? false }))
-  );
-  const [userStats] = useState({
-    level: 5,
-    totalXP: 1250,
-    xpToNextLevel: 2000,
-    gamesCompleted: 1,
-    totalGames: 6,
-  });
+  const { user } = useAuth();
+
+  const GAME_HISTORY_KEY = "careerai_game_history";
+  const playedGames: string[] = (() => {
+    try {
+      if (!user) return [];
+      const all = JSON.parse(localStorage.getItem(GAME_HISTORY_KEY) || "{}");
+      const history: Array<{ gameType: string }> = all[user.id] || [];
+      return [...new Set(history.map((h) => h.gameType))];
+    } catch {
+      return [];
+    }
+  })();
+
+  const allNonQuestPlayed = ["logical-reasoning", "pattern-recognition", "mathematical-thinking", "problem-solving", "technical-knowledge"]
+    .every((id) => playedGames.includes(id));
+
+  const games = getLocalGames().map((g) => ({
+    ...g,
+    progress: 0,
+    isCompleted: playedGames.includes(g.id),
+    isLocked: g.id === "career-quest" ? !allNonQuestPlayed : false,
+  }));
+
+  const xpToNextLevel = (user?.level ?? 1) * 500;
+  const xpProgress = Math.min(((user?.totalXP ?? 0) / xpToNextLevel) * 100, 100);
+
+  const levelTitles: Record<number, string> = {
+    1: "Newcomer", 2: "Explorer", 3: "Strategist", 4: "Achiever", 5: "Champion",
+  };
+  const levelTitle = levelTitles[user?.level ?? 1] || "Expert";
 
   const handleGameClick = (gameId: string) => {
     navigate(`/games/${gameId}`);
   };
-
-  useEffect(() => {
-    const fetchGames = async () => {
-      try {
-        const remoteGames = await gamesAPI.getAvailableGames();
-        const local = getLocalGames();
-        const merged = remoteGames.map((g: any) => {
-          const localMatch = local.find((l) => l.id === g.id);
-          return {
-            id: g.id,
-            title: g.name || localMatch?.title || g.id,
-            description: g.description || localMatch?.description || "Game description",
-            skill: localMatch?.skill || g.skill || "Skill",
-            difficulty: (localMatch?.difficulty || g.difficulty || "Medium") as GameMeta["difficulty"],
-            estimatedTime: localMatch?.estimatedTime || g.estimatedTime || "15 min",
-            xpReward: localMatch?.xpReward || g.xpReward || 150,
-            isLocked: localMatch?.isLocked ?? g.isLocked ?? false,
-            progress: 0,
-            isCompleted: false,
-          };
-        });
-        setGames(merged);
-      } catch {
-        // fallback already loaded from local data
-      }
-    };
-    fetchGames();
-  }, []);
-
-  const xpProgress = (userStats.totalXP / userStats.xpToNextLevel) * 100;
 
   return (
     <Layout>
@@ -233,7 +222,7 @@ export default function Games() {
               <div className="flex items-center gap-4">
                 <div className="relative">
                   <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-                    <span className="text-2xl font-bold text-primary-foreground">{userStats.level}</span>
+                    <span className="text-2xl font-bold text-primary-foreground">{user?.level ?? 1}</span>
                   </div>
                   <div className="absolute -bottom-1 -right-1 bg-amber-500 rounded-full p-1">
                     <Star className="w-3 h-3 text-white" />
@@ -241,7 +230,7 @@ export default function Games() {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Current Level</p>
-                  <p className="font-bold text-foreground">Explorer</p>
+                  <p className="font-bold text-foreground">{levelTitle}</p>
                 </div>
               </div>
 
@@ -249,7 +238,7 @@ export default function Games() {
                 <div className="flex justify-between text-sm mb-2">
                   <span className="text-muted-foreground">Experience Points</span>
                   <span className="text-foreground font-medium">
-                    {userStats.totalXP} / {userStats.xpToNextLevel} XP
+                    {user?.totalXP ?? 0} / {xpToNextLevel} XP
                   </span>
                 </div>
                 <Progress value={xpProgress} className="h-3" />
@@ -258,8 +247,8 @@ export default function Games() {
               <div className="text-center md:text-right">
                 <p className="text-sm text-muted-foreground">Games Completed</p>
                 <p className="text-2xl font-bold text-foreground">
-                  {userStats.gamesCompleted}
-                  <span className="text-muted-foreground text-lg">/{userStats.totalGames}</span>
+                  {playedGames.length}
+                  <span className="text-muted-foreground text-lg">/6</span>
                 </p>
               </div>
             </div>

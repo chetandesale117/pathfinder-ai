@@ -10,7 +10,8 @@ import { GameResults } from "@/components/games/GameResults";
 import { Code, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
-import { gameAPI } from "@/lib/api";
+import { saveGameResult } from "@/lib/gameStorage";
+import { useAuth } from "@/contexts/AuthContext";
 import { useGameQuestions } from "@/hooks/useGameQuestions";
 import { technicalKnowledgeQuestions } from "@/lib/gamesData";
 
@@ -36,6 +37,7 @@ const categoryColors: Record<string, string> = {
 
 export default function TechnicalKnowledge() {
   const navigate = useNavigate();
+  const { user, updateUser } = useAuth();
   const { questions } = useGameQuestions<Question>("technical-knowledge", technicalKnowledgeQuestions);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
@@ -137,22 +139,20 @@ export default function TechnicalKnowledge() {
     }
   };
 
-  const submitResults = async () => {
+  const submitResults = () => {
     setIsComplete(true);
-    try {
-      await gameAPI.submit({
+    if (user) {
+      saveGameResult(user.id, {
         gameType: "technical-knowledge",
-        accuracy: (correctAnswers / questions.length) * 100,
+        accuracy: Math.round((correctAnswers / questions.length) * 100),
         timeTaken: totalTime,
         score,
         xpEarned: xp,
         totalQuestions: questions.length,
         correctAnswers,
-        streak,
-        avgTimePerQuestion: totalTime / questions.length,
+        completedAt: new Date().toISOString(),
       });
-    } catch {
-      // Silently handle
+      updateUser({ totalXP: user.totalXP + xp, gamesPlayed: user.gamesPlayed + 1 });
     }
   };
 

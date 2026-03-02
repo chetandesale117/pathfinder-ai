@@ -9,7 +9,8 @@ import { GameResults } from "@/components/games/GameResults";
 import { Brain, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
-import { gameAPI } from "@/lib/api";
+import { saveGameResult } from "@/lib/gameStorage";
+import { useAuth } from "@/contexts/AuthContext";
 import { useGameQuestions } from "@/hooks/useGameQuestions";
 import { logicalReasoningQuestions } from "@/lib/gamesData";
 
@@ -24,6 +25,7 @@ interface Question {
 
 export default function LogicalReasoning() {
   const navigate = useNavigate();
+  const { user, updateUser } = useAuth();
   const { questions } = useGameQuestions<Question>("logical-reasoning", logicalReasoningQuestions as unknown as Question[]);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
@@ -102,23 +104,20 @@ export default function LogicalReasoning() {
     }
   };
 
-  const submitResults = async () => {
+  const submitResults = () => {
     setIsComplete(true);
-    try {
-      await gameAPI.submit({
+    if (user) {
+      saveGameResult(user.id, {
         gameType: "logical-reasoning",
-        accuracy: (correctAnswers / questions.length) * 100,
+        accuracy: Math.round((correctAnswers / questions.length) * 100),
         timeTaken: totalTime,
         score,
         xpEarned: xp,
-        difficultyLevel: "Mixed",
         totalQuestions: questions.length,
         correctAnswers,
-        streak,
-        avgTimePerQuestion: totalTime / questions.length,
+        completedAt: new Date().toISOString(),
       });
-    } catch {
-      // Silently handle - results are displayed locally
+      updateUser({ totalXP: user.totalXP + xp, gamesPlayed: user.gamesPlayed + 1 });
     }
   };
 

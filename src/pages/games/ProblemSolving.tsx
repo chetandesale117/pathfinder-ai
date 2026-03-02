@@ -9,7 +9,8 @@ import { GameResults } from "@/components/games/GameResults";
 import { Lightbulb, ArrowLeft, Info } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
-import { gameAPI } from "@/lib/api";
+import { saveGameResult } from "@/lib/gameStorage";
+import { useAuth } from "@/contexts/AuthContext";
 import { useGameQuestions } from "@/hooks/useGameQuestions";
 import { problemSolvingQuestions } from "@/lib/gamesData";
 
@@ -24,6 +25,7 @@ interface Question {
 
 export default function ProblemSolving() {
   const navigate = useNavigate();
+  const { user, updateUser } = useAuth();
   const { questions } = useGameQuestions<Question>("problem-solving", problemSolvingQuestions);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
@@ -117,22 +119,20 @@ export default function ProblemSolving() {
     }
   };
 
-  const submitResults = async () => {
+  const submitResults = () => {
     setIsComplete(true);
-    try {
-      await gameAPI.submit({
+    if (user) {
+      saveGameResult(user.id, {
         gameType: "problem-solving",
-        accuracy: (correctAnswers / questions.length) * 100,
+        accuracy: Math.round((correctAnswers / questions.length) * 100),
         timeTaken: totalTime,
         score,
         xpEarned: xp,
         totalQuestions: questions.length,
         correctAnswers,
-        streak,
-        avgTimePerQuestion: totalTime / questions.length,
+        completedAt: new Date().toISOString(),
       });
-    } catch {
-      // Silently handle
+      updateUser({ totalXP: user.totalXP + xp, gamesPlayed: user.gamesPlayed + 1 });
     }
   };
 

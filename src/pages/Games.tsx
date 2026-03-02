@@ -19,7 +19,7 @@ import {
   CheckCircle,
   Play,
 } from "lucide-react";
-import { gamesAPI } from "@/lib/api";
+import { gamesAPI, dashboardAPI } from "@/lib/api";
 import { getLocalGames, GameMeta } from "@/lib/gamesData";
 
 interface GameCardProps {
@@ -34,7 +34,6 @@ interface GameCardProps {
   isCompleted: boolean;
   isLocked: boolean;
   xpReward: number;
-  onClick: () => void;
 }
 
 const difficultyColors = {
@@ -45,6 +44,7 @@ const difficultyColors = {
 };
 
 const GameCard = ({
+  id,
   title,
   description,
   skill,
@@ -55,12 +55,24 @@ const GameCard = ({
   isCompleted,
   isLocked,
   xpReward,
-  onClick,
-}: GameCardProps) => (
+}: GameCardProps) => {
+  const navigate = useNavigate();
+  const handleGameClick = (gameId: string, action: 'playAgain' | 'continue' | 'startGame') => {
+    console.log(gameId, action);
+    if (action === 'playAgain') {
+      navigate(`/games/${gameId}`);
+    } else if (action === 'continue') {
+      navigate(`/games/${gameId}`);
+    } else if (action === 'startGame') {
+      navigate(`/games/${gameId}`);
+    }
+  };
+
+  return (
   <motion.div
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
-    whileHover={{ scale: isLocked ? 1 : 1.02, y: isLocked ? 0 : -5 }}
+    // whileHover={{ scale: isLocked ? 1 : 1.02, y: isLocked ? 0 : -5 }}
     transition={{ duration: 0.3 }}
     className={`relative bg-card rounded-2xl border overflow-hidden group ${
       isLocked
@@ -137,20 +149,20 @@ const GameCard = ({
         </div>
       )}
 
-      <Button variant={isCompleted ? "outline" : "hero"} className="w-full" onClick={onClick} disabled={isLocked}>
+      <Button variant={isCompleted ? "outline" : "hero"} className="w-full"  disabled={isLocked}>
         {isCompleted ? (
           <>
-            <Trophy className="w-4 h-4 mr-2" />
+            <Trophy className="w-4 h-4 mr-2" onClick={(e) => handleGameClick(id, 'playAgain')}/>
             Play Again
           </>
         ) : progress > 0 ? (
           <>
-            <Play className="w-4 h-4 mr-2" />
+            <Play className="w-4 h-4 mr-2" onClick={() => handleGameClick(id, 'continue')}/>
             Continue
           </>
         ) : (
           <>
-            <Play className="w-4 h-4 mr-2" />
+            <Play className="w-4 h-4 mr-2" onClick={() => handleGameClick(id, 'startGame')}/>
             Start Game
           </>
         )}
@@ -158,13 +170,14 @@ const GameCard = ({
     </div>
   </motion.div>
 );
+}
 
 export default function Games() {
   const navigate = useNavigate();
   const [games, setGames] = useState<(GameMeta & { progress: number; isCompleted: boolean; isLocked: boolean })[]>(
     getLocalGames().map(g => ({ ...g, progress: 0, isCompleted: false, isLocked: g.isLocked ?? false }))
   );
-  const [userStats] = useState({
+  const [userStats, setUserStats] = useState({
     level: 5,
     totalXP: 1250,
     xpToNextLevel: 2000,
@@ -173,25 +186,38 @@ export default function Games() {
   });
 
   const handleGameClick = (gameId: string) => {
+    console.log(gameId);
+    
     navigate(`/games/${gameId}`);
+  };
+
+  const fetchUserStats = async () => {
+    const data = await dashboardAPI.get();
+    setUserStats((prev: typeof userStats) => ({
+      ...prev,
+      level: data.user.level,
+      totalXP: data.user.totalXP,
+      xpToNextLevel: data.user.xpToNextLevel,
+      gamesCompleted: data.user.gamesPlayed,
+      totalGames: 6,
+      }));
   };
 
   useEffect(() => {
     const fetchGames = async () => {
       try {
         const remoteGames = await gamesAPI.getAvailableGames();
-        const local = getLocalGames();
+     
         const merged = remoteGames.map((g: any) => {
-          const localMatch = local.find((l) => l.id === g.id);
           return {
             id: g.id,
-            title: g.name || localMatch?.title || g.id,
-            description: g.description || localMatch?.description || "Game description",
-            skill: localMatch?.skill || g.skill || "Skill",
-            difficulty: (localMatch?.difficulty || g.difficulty || "Medium") as GameMeta["difficulty"],
-            estimatedTime: localMatch?.estimatedTime || g.estimatedTime || "15 min",
-            xpReward: localMatch?.xpReward || g.xpReward || 150,
-            isLocked: localMatch?.isLocked ?? g.isLocked ?? false,
+            title: g.name || g?.title || g.id,
+            description: g.description || g?.description || "Game description",
+            skill: g?.skill || g.skill || "Skill",
+            difficulty: (g?.difficulty || g.difficulty || "Medium") as GameMeta["difficulty"],
+            estimatedTime: g?.estimatedTime || g.estimatedTime || "15 min",
+            xpReward: g?.xpReward || g.xpReward || 150,
+            isLocked: g?.isLocked ?? g.isLocked ?? false,
             progress: 0,
             isCompleted: false,
           };
@@ -202,6 +228,7 @@ export default function Games() {
       }
     };
     fetchGames();
+    fetchUserStats();
   }, []);
 
   const xpProgress = (userStats.totalXP / userStats.xpToNextLevel) * 100;
@@ -290,7 +317,7 @@ export default function Games() {
                       <Trophy className="w-6 h-6 text-rose-400" />
                     )
                   }
-                  onClick={() => handleGameClick(game.id)}
+        
                 />
               </motion.div>
             ))}

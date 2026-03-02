@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { motion } from "framer-motion";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
@@ -162,7 +163,8 @@ export default function Games() {
   const { user } = useAuth();
 
   const GAME_HISTORY_KEY = "careerai_game_history";
-  const playedGames: string[] = (() => {
+
+  const playedGames: string[] = useMemo(() => {
     try {
       if (!user) return [];
       const all = JSON.parse(localStorage.getItem(GAME_HISTORY_KEY) || "{}");
@@ -171,17 +173,25 @@ export default function Games() {
     } catch {
       return [];
     }
-  })();
+  }, [user]);
 
-  const allNonQuestPlayed = ["logical-reasoning", "pattern-recognition", "mathematical-thinking", "problem-solving", "technical-knowledge"]
-    .every((id) => playedGames.includes(id));
+  const allNonQuestPlayed = useMemo(
+    () =>
+      ["logical-reasoning", "pattern-recognition", "mathematical-thinking", "problem-solving", "technical-knowledge"]
+        .every((id) => playedGames.includes(id)),
+    [playedGames]
+  );
 
-  const games = getLocalGames().map((g) => ({
-    ...g,
-    progress: 0,
-    isCompleted: playedGames.includes(g.id),
-    isLocked: g.id === "career-quest" ? !allNonQuestPlayed : false,
-  }));
+  const games = useMemo(
+    () =>
+      getLocalGames().map((g) => ({
+        ...g,
+        progress: 0,
+        isCompleted: playedGames.includes(g.id),
+        isLocked: g.id === "career-quest" ? !allNonQuestPlayed : false,
+      })),
+    [playedGames, allNonQuestPlayed]
+  );
 
   const xpToNextLevel = (user?.level ?? 1) * 500;
   const xpProgress = Math.min(((user?.totalXP ?? 0) / xpToNextLevel) * 100, 100);

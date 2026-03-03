@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
 import { motion } from "framer-motion";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
@@ -19,8 +19,8 @@ import {
   CheckCircle,
   Play,
 } from "lucide-react";
-import { gamesAPI, dashboardAPI } from "@/lib/api";
 import { getLocalGames, GameMeta } from "@/lib/gamesData";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface GameCardProps {
   id: string;
@@ -43,6 +43,15 @@ const difficultyColors = {
   Expert: "bg-rose-500/20 text-rose-400 border-rose-500/30",
 };
 
+const gameIcons: Record<string, React.ReactNode> = {
+  "logical-reasoning": <Brain className="w-6 h-6 text-primary" />,
+  "pattern-recognition": <Shapes className="w-6 h-6 text-accent" />,
+  "mathematical-thinking": <Calculator className="w-6 h-6 text-emerald-400" />,
+  "problem-solving": <Lightbulb className="w-6 h-6 text-amber-400" />,
+  "technical-knowledge": <Code className="w-6 h-6 text-cyan-400" />,
+  "career-quest": <Trophy className="w-6 h-6 text-rose-400" />,
+};
+
 const GameCard = ({
   id,
   title,
@@ -57,10 +66,6 @@ const GameCard = ({
   xpReward,
 }: GameCardProps) => {
   const navigate = useNavigate();
-
-  const handleGameClick = () => {
-    navigate(`/games/${id}`);
-  };
 
   return (
     <motion.div
@@ -110,9 +115,7 @@ const GameCard = ({
             {icon}
           </div>
           <div className="flex-1">
-            <h3 className="font-bold text-lg text-foreground mb-1">
-              {title}
-            </h3>
+            <h3 className="font-bold text-lg text-foreground mb-1">{title}</h3>
             <p className="text-sm text-muted-foreground line-clamp-2">
               {description}
             </p>
@@ -157,7 +160,7 @@ const GameCard = ({
           variant={isCompleted ? "outline" : "hero"}
           className="w-full"
           disabled={isLocked}
-          onClick={handleGameClick}
+          onClick={() => navigate(`/games/${id}`)}
         >
           {isCompleted ? (
             <>
@@ -181,77 +184,50 @@ const GameCard = ({
   );
 };
 
+const CORE_GAMES = [
+  "logical-reasoning",
+  "pattern-recognition",
+  "mathematical-thinking",
+  "problem-solving",
+  "technical-knowledge",
+];
+
 export default function Games() {
   const navigate = useNavigate();
+  const { user } = useAuth();
 
-  const [games, setGames] = useState<
-    (GameMeta & {
-      progress: number;
-      isCompleted: boolean;
-      isLocked: boolean;
-    })[]
-  >(
-    getLocalGames().map((g) => ({
-      ...g,
-      progress: 0,
-      isCompleted: false,
-      isLocked: g.isLocked ?? false,
-    }))
+  const playedGameIds = useMemo(() => {
+    if (!user) return new Set<string>();
+    try {
+      const all = JSON.parse(
+        localStorage.getItem("careerai_game_history") || "{}"
+      );
+      const history: { gameType: string }[] = all[user.id] || [];
+      return new Set(history.map((h) => h.gameType));
+    } catch {
+      return new Set<string>();
+    }
+  }, [user]);
+
+  const allCoreCompleted = useMemo(
+    () => CORE_GAMES.every((id) => playedGameIds.has(id)),
+    [playedGameIds]
   );
 
-  const [userStats, setUserStats] = useState({
-    level: 5,
-    totalXP: 1250,
-    xpToNextLevel: 2000,
-    gamesCompleted: 1,
-    totalGames: 6,
-  });
+  const games = useMemo(
+    () =>
+      getLocalGames().map((g) => ({
+        ...g,
+        progress: 0,
+        isCompleted: playedGameIds.has(g.id),
+        isLocked: g.id === "career-quest" ? !allCoreCompleted : false,
+      })),
+    [playedGameIds, allCoreCompleted]
+  );
 
-  useEffect(() => {
-    const fetchGames = async () => {
-      try {
-        const remoteGames = await gamesAPI.getAvailableGames();
-
-        const merged = remoteGames.map((g: any) => ({
-          id: g.id,
-          title: g.name || g.title || g.id,
-          description: g.description || "Game description",
-          skill: g.skill || "Skill",
-          difficulty: (g.difficulty || "Medium") as GameMeta["difficulty"],
-          estimatedTime: g.estimatedTime || "15 min",
-          xpReward: g.xpReward || 150,
-          isLocked: g.isLocked ?? false,
-          progress: 0,
-          isCompleted: false,
-        }));
-
-        setGames(merged);
-      } catch {
-        console.log("Using local fallback games");
-      }
-    };
-
-    const fetchUserStats = async () => {
-      try {
-        const data = await dashboardAPI.get();
-        setUserStats({
-          level: data.user.level,
-          totalXP: data.user.totalXP,
-          xpToNextLevel: data.user.xpToNextLevel,
-          gamesCompleted: data.user.gamesPlayed,
-          totalGames: 6,
-        });
-      } catch {
-        console.log("Using default stats");
-      }
-    };
-
-    fetchGames();
-    fetchUserStats();
-  }, []);
-
-  const xpProgress =
-    (userStats.totalXP / userStats.xpToNextLevel) * 100;
+  const xpToNextLevel = (user?.level ?? 1) * 500;
+  const xpProgress = Math.min(((user?.totalXP ?? 0) / xpToNextLevel) * 100, 100);
+  const gamesCompleted = games.filter((g) => g.isCompleted && g.id !== "career-quest").length;
 
   return (
     <Layout>
@@ -279,7 +255,7 @@ export default function Games() {
                 <div className="relative">
                   <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center">
                     <span className="text-2xl font-bold text-primary-foreground">
-                      {userStats.level}
+                      {user?.level ?? 1}
                     </span>
                   </div>
                   <div className="absolute -bottom-1 -right-1 bg-amber-500 rounded-full p-1">
@@ -287,12 +263,8 @@ export default function Games() {
                   </div>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">
-                    Current Level
-                  </p>
-                  <p className="font-bold text-foreground">
-                    Explorer
-                  </p>
+                  <p className="text-sm text-muted-foreground">Current Level</p>
+                  <p className="font-bold text-foreground">Explorer</p>
                 </div>
               </div>
 
@@ -302,20 +274,18 @@ export default function Games() {
                     Experience Points
                   </span>
                   <span className="text-foreground font-medium">
-                    {userStats.totalXP} / {userStats.xpToNextLevel} XP
+                    {user?.totalXP ?? 0} / {xpToNextLevel} XP
                   </span>
                 </div>
                 <Progress value={xpProgress} className="h-3" />
               </div>
 
               <div className="text-center md:text-right">
-                <p className="text-sm text-muted-foreground">
-                  Games Completed
-                </p>
+                <p className="text-sm text-muted-foreground">Games Completed</p>
                 <p className="text-2xl font-bold text-foreground">
-                  {userStats.gamesCompleted}
+                  {gamesCompleted}
                   <span className="text-muted-foreground text-lg">
-                    /{userStats.totalGames}
+                    /{CORE_GAMES.length}
                   </span>
                 </p>
               </div>
@@ -328,21 +298,7 @@ export default function Games() {
               <GameCard
                 key={game.id}
                 {...game}
-                icon={
-                  game.id === "logical-reasoning" ? (
-                    <Brain className="w-6 h-6 text-primary" />
-                  ) : game.id === "pattern-recognition" ? (
-                    <Shapes className="w-6 h-6 text-accent" />
-                  ) : game.id === "mathematical-thinking" ? (
-                    <Calculator className="w-6 h-6 text-emerald-400" />
-                  ) : game.id === "problem-solving" ? (
-                    <Lightbulb className="w-6 h-6 text-amber-400" />
-                  ) : game.id === "technical-knowledge" ? (
-                    <Code className="w-6 h-6 text-cyan-400" />
-                  ) : (
-                    <Trophy className="w-6 h-6 text-rose-400" />
-                  )
-                }
+                icon={gameIcons[game.id] ?? <Trophy className="w-6 h-6 text-rose-400" />}
               />
             ))}
           </div>
@@ -352,17 +308,31 @@ export default function Games() {
             <div className="bg-gradient-to-r from-primary/10 via-accent/10 to-primary/10 rounded-2xl p-8 border border-border/50">
               <Trophy className="w-12 h-12 text-amber-400 mx-auto mb-4" />
               <h2 className="text-xl font-bold text-foreground mb-2">
-                Complete All Games to Unlock Career Quest
+                {allCoreCompleted
+                  ? "Career Quest Unlocked! 🎉"
+                  : "Complete All Games to Unlock Career Quest"}
               </h2>
               <p className="text-muted-foreground mb-4 max-w-lg mx-auto">
-                Finish all assessment games to unlock Career Quest Mode and
-                receive personalized AI-powered career recommendations.
+                {allCoreCompleted
+                  ? "All games completed! Start Career Quest to get personalized AI-powered career recommendations."
+                  : "Finish all assessment games to unlock Career Quest Mode and receive personalized AI-powered career recommendations."}
               </p>
               <Button
-                variant="outline"
-                onClick={() => navigate("/career-results")}
+                variant={allCoreCompleted ? "hero" : "outline"}
+                onClick={() =>
+                  allCoreCompleted
+                    ? navigate("/games/career-quest")
+                    : navigate("/career-results")
+                }
               >
-                View Your Progress
+                {allCoreCompleted ? (
+                  <>
+                    <Play className="w-4 h-4 mr-2" />
+                    Start Career Quest
+                  </>
+                ) : (
+                  "View Your Progress"
+                )}
               </Button>
             </div>
           </div>
